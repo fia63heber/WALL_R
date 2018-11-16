@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using WALL_R.Models;
 
 namespace WALL_R.Controllers
 {
@@ -11,9 +12,12 @@ namespace WALL_R.Controllers
     {
         // GET api/values
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            room_managementContext context = new room_managementContext();
+            var files = context.Files;
+
+            return Ok(files);
         }
 
         // GET api/values/5
