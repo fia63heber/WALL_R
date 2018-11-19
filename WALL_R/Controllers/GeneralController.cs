@@ -27,6 +27,29 @@ namespace WALL_R.Controllers
             return Ok(rooms);
         }
 
+        [HttpGet("room/{room_id}/defects")]
+        public IActionResult GetDefectsForRoom(int room_id)
+        {
+            room_management_dbContext context = getContext();
+            //check if room exists
+            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+            {
+                return NotFound();
+            }
+
+            var defects = new List<Defects>();
+
+            foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
+            {
+                foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
+                {
+                    defects.AddRange(context.Defects.Where(f => f.ComponentId == component.Id).ToList());
+                }
+            }
+
+            return Ok(defects);
+        }
+
         [HttpGet("devices/{room_id}")]
         public IActionResult GetDevicesForRoom(int room_id)
         {
@@ -47,27 +70,6 @@ namespace WALL_R.Controllers
             return Ok(devices);
         }
 
-        [HttpGet("defects/{room_id}")]
-        public IActionResult GetDefectsForRoom(int room_id)
-        {
-            room_management_dbContext context = getContext();
-            //check if room exists
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
-            {
-                return NotFound();
-            }
-
-            /*foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
-            {
-                foreach (Components Components in context.Components.Where(f => f. == device.Id))
-                {
-
-                }
-            }*/
-
-            return Ok();
-        }
-
         [HttpGet("device/{id}")]
         public IActionResult GetDevice(int id)
         {
@@ -79,6 +81,82 @@ namespace WALL_R.Controllers
             }
 
             return Ok(device);
+        }
+
+        [HttpPost("defect")]
+        public IActionResult CreateDefect(int component_id, int defect_type_id, int state_id, int priority_id, int writer_id, string name, string entry_comment, string owner_comment)
+        {
+            room_management_dbContext context = getContext();
+            Defects newDefect = new Defects();
+
+            bool error = false;
+            string error_message = "Fehlerhafte Angaben:\n";
+
+            if (context.Components.Count(f => f.Id == component_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde kein gültiger Geräte-Komponent angegeben\n";
+            }
+            else
+            {
+                newDefect.ComponentId = component_id;
+            }
+
+            if (context.DefectTypes.Count(f => f.Id == defect_type_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde kein gültiger Fehlertyp angegeben\n";
+            }
+            else
+            {
+                newDefect.DefectTypeId = defect_type_id;
+            }
+
+            if (context.States.Count(f => f.Id == state_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde kein gültiger Status angegeben\n";
+            }
+            else
+            {
+                newDefect.StateId = state_id;
+            }
+
+            if (context.Priorities.Count(f => f.Id == priority_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde keine gültige Priorität angegeben\n";
+            }
+            else
+            {
+                newDefect.PriorityId = priority_id;
+            }
+
+            if (context.Accounts.Count(f => f.Id == writer_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde kein gültiger Fehlertyp angegeben\n";
+            }
+            else
+            {
+                newDefect.WriterId = writer_id;
+            }
+
+            newDefect.Name = name;
+            newDefect.EntryComment = entry_comment;
+            newDefect.OwnerComment = owner_comment;
+            
+            return Ok();
+        }
+
+        [HttpGet("writer/{writer_id}/defects")]
+        public IActionResult GetDefectsForWriter(int writer_id)
+        {
+            room_management_dbContext context = getContext();
+
+            var defects = context.Defects.Where(f => f.WriterId == writer_id);
+
+            return Ok(defects);
         }
     }
 }
