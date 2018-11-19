@@ -8,8 +8,5 @@ namespace WALL_R.Models
         public int Id { get; set; }
         public int? RightGroupId { get; set; }
         public int? RightId { get; set; }
-
-        public Rights Right { get; set; }
-        public RightGroups RightGroup { get; set; }
     }
 }

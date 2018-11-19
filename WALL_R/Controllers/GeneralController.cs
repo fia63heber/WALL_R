@@ -10,53 +10,68 @@ namespace WALL_R.Controllers
     [Route("api/[controller]")]
     public class GeneralController : Controller
     {
-        public room_managementContext getContext()
+        public room_management_dbContext getContext()
         {
-            return new room_managementContext();
+            return new room_management_dbContext();
         }
 
         [HttpGet("rooms")]
         public IActionResult GetRooms()
         {
-            room_managementContext context = getContext();
+            // Get database context
+            room_management_dbContext context = getContext();
+            // Get all rooms:
             var rooms = context.Rooms;
 
+            // Return a success report including found devices to the frontend:
             return Ok(rooms);
+        }
+
+        [HttpGet("devices/{room_id}")]
+        public IActionResult GetDevicesForRoom(int room_id)
+        {
+            // Get database context
+            room_management_dbContext context = getContext();
+            // Check if room exists
+            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+            {
+                return NotFound();
+            }
+            // Get all devices where room_id equals received room_id:
+            var devices = context.Devices.Where(f => f.RoomId == room_id);
+            if (devices.Count() == 0)
+            {
+                return NotFound();
+            }
+            // Return a success report including found devices to the frontend:
+            return Ok(devices);
         }
 
         [HttpGet("defects/{room_id}")]
         public IActionResult GetDefectsForRoom(int room_id)
         {
-            room_managementContext context = getContext();
+            room_management_dbContext context = getContext();
             //check if room exists
             if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
             {
                 return NotFound();
             }
-            var defects = new List<Defects>();
 
-            foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
+            /*foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
             {
-                foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
+                foreach (Components Components in context.Components.Where(f => f. == device.Id))
                 {
-                    defects = context.Defects.Where(f => f.ComponentId == component.Id).ToList();
-                    //defects.AddRange(context.Defects.Where(f => f.ComponentId == component.Id).ToList());
+
                 }
-            }
+            }*/
 
-
-
-            if (defects.Count() == 0)
-            {
-                return NotFound();
-            }
-            return Ok(defects);
+            return Ok();
         }
 
         [HttpGet("device/{id}")]
         public IActionResult GetDevice(int id)
         {
-            room_managementContext context = getContext();
+            room_management_dbContext context = getContext();
             var device = context.Devices.Where(f => f.Id == id);
             if (device.Count() == 0)
             {
@@ -64,24 +79,6 @@ namespace WALL_R.Controllers
             }
 
             return Ok(device);
-        }
-
-        [HttpGet("devices/{room_id}")]
-        public IActionResult GetDevicesForRoom(int room_id)
-        {
-            room_managementContext context = getContext();
-            //check if room exists
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
-            {
-                return NotFound();
-            }
-
-            var devices = context.Devices.Where(f => f.RoomId == room_id);
-            if (devices.Count() == 0)
-            {
-                return NotFound();
-            }
-            return Ok(devices);
         }
     }
 }

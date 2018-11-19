@@ -5,14 +5,7 @@ namespace WALL_R.Models
 {
     public partial class Priorities
     {
-        public Priorities()
-        {
-            Defects = new HashSet<Defects>();
-        }
-
         public int Id { get; set; }
         public string Name { get; set; }
-
-        public ICollection<Defects> Defects { get; set; }
     }
 }

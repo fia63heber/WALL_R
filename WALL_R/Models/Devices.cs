@@ -10,8 +10,5 @@ namespace WALL_R.Models
         public int? DeviceTypeId { get; set; }
         public string Name { get; set; }
         public string SerialNumber { get; set; }
-
-        public DeviceTypes DeviceType { get; set; }
-        public Rooms Room { get; set; }
     }
 }

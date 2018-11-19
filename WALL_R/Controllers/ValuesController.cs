@@ -14,9 +14,9 @@ namespace WALL_R.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            room_managementContext context = new room_managementContext();
+            room_management_dbContext context = new room_management_dbContext();
             var files = context.Files;
-
+            
             return Ok(files);
         }
 
