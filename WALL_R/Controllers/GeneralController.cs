@@ -20,6 +20,10 @@ namespace WALL_R.Controllers
         {
             // Get database context
             room_management_dbContext context = getContext();
+            if (Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]) == null)
+            {
+                return Unauthorized();
+            }
             // Get all rooms:
             var rooms = context.Rooms;
 
@@ -84,9 +88,14 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("defect")]
-        public IActionResult CreateDefect(int component_id, int defect_type_id, int state_id, int priority_id, int writer_id, string name, string entry_comment, string owner_comment)
+        public IActionResult CreateDefect(int component_id, int defect_type_id, int state_id, int priority_id, string name, string entry_comment, string owner_comment)
         {
             room_management_dbContext context = getContext();
+            Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
             Defects newDefect = new Defects();
 
             bool error = false;
@@ -131,16 +140,7 @@ namespace WALL_R.Controllers
             {
                 newDefect.PriorityId = priority_id;
             }
-
-            if (context.Accounts.Count(f => f.Id == writer_id) == 0)
-            {
-                error = true;
-                error_message += "- Es wurde kein gültiger Fehlertyp angegeben\n";
-            }
-            else
-            {
-                newDefect.WriterId = writer_id;
-            }
+            newDefect.WriterId = user.Id;
 
             if (error)
             {
@@ -154,12 +154,13 @@ namespace WALL_R.Controllers
             return Ok();
         }
 
-        [HttpGet("writer/{writer_id}/defects")]
-        public IActionResult GetDefectsForWriter(int writer_id)
+        [HttpGet("writer/defects")]
+        public IActionResult GetDefectsForWriter()
         {
             room_management_dbContext context = getContext();
+            Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
 
-            var defects = context.Defects.Where(f => f.WriterId == writer_id);
+            var defects = context.Defects.Where(f => f.WriterId == user.Id);
 
             return Ok(defects);
         }
