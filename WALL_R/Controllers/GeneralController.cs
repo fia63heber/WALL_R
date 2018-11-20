@@ -10,7 +10,7 @@ namespace WALL_R.Controllers
     [Route("api/[controller]")]
     public class GeneralController : Controller
     {
-        public room_management_dbContext getContext()
+        private room_management_dbContext getContext()
         {
             return new room_management_dbContext();
         }
@@ -140,6 +140,11 @@ namespace WALL_R.Controllers
             else
             {
                 newDefect.WriterId = writer_id;
+            }
+
+            if (error)
+            {
+                return NotFound(error_message);
             }
 
             newDefect.Name = name;
