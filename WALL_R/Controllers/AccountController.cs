@@ -23,9 +23,6 @@ namespace WALL_R.Controllers
             {
                 Logout();
             }
-
-
-
             if (context.Accounts.Where(f => f.Email == email).Count() == 0)
             {
                 return NotFound("Falsche Accountdaten");
@@ -42,7 +39,7 @@ namespace WALL_R.Controllers
             Sessions session = new Sessions();
             session.Token = token;
             session.AccountId = context.Accounts.Where(f => f.Email == email).First().Id;
-            session.ExpiringDate = DateTime.Now.AddHours(2);
+            session.ExpiringDate = DateTime.Now.AddMinutes(20);
             context.Sessions.Add(session);
             context.SaveChanges();
 
@@ -58,6 +55,11 @@ namespace WALL_R.Controllers
         {
             room_management_dbContext context = getContext();
             Accounts account = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+
+            if (account == null)
+            {
+                return NotFound();
+            }
 
             foreach (Sessions session in context.Sessions.Where(f => f.AccountId == account.Id))
             {
