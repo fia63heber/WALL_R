@@ -28,6 +28,7 @@ namespace WALL_R.Models
         public virtual DbSet<RightGroupsRights> RightGroupsRights { get; set; }
         public virtual DbSet<Rights> Rights { get; set; }
         public virtual DbSet<Rooms> Rooms { get; set; }
+        public virtual DbSet<Sessions> Sessions { get; set; }
         public virtual DbSet<States> States { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -48,8 +49,16 @@ namespace WALL_R.Models
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
+                entity.Property(e => e.Email)
+                    .HasColumnName("email")
+                    .HasMaxLength(255);
+
                 entity.Property(e => e.Ldapid)
                     .HasColumnName("LDAPID")
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.Password)
+                    .HasColumnName("password")
                     .HasMaxLength(255);
 
                 entity.Property(e => e.Prename)
@@ -226,6 +235,23 @@ namespace WALL_R.Models
 
                 entity.Property(e => e.RoomNumber)
                     .HasColumnName("room_number")
+                    .HasMaxLength(255);
+            });
+
+            modelBuilder.Entity<Sessions>(entity =>
+            {
+                entity.ToTable("sessions");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.AccountId).HasColumnName("account_id");
+
+                entity.Property(e => e.ExpiringDate)
+                    .HasColumnName("expiring_date")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.Token)
+                    .HasColumnName("token")
                     .HasMaxLength(255);
             });
 
