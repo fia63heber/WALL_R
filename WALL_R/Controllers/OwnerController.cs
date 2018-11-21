@@ -10,6 +10,11 @@ namespace WALL_R.Controllers
     [Route("api/[controller]")]
     public class OwnerController : Controller
     {
+        private bool checkAuthentication()
+        {
+            return Libraries.SessionManager.checkAuthentication("owner", HttpContext.Request.Cookies["session"]);
+        }
+
         private room_management_dbContext getContext()
         {
             return new room_management_dbContext();
@@ -18,6 +23,11 @@ namespace WALL_R.Controllers
         [HttpGet("owner/{owner_id}/defects")]
         public IActionResult GetDefectsForOwner(int owner_id)
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+
             room_management_dbContext context = getContext();
             var defects = new List<Defects>();
 
@@ -39,6 +49,10 @@ namespace WALL_R.Controllers
         public IActionResult GetDefectsForOwner(int defect_id, int priority_id)
         {
             room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
 
             context.Defects.Where(f => f.Id == defect_id).First().PriorityId = priority_id;
             context.SaveChanges();
@@ -61,6 +75,10 @@ namespace WALL_R.Controllers
         public IActionResult addPlanfileForRoom(int room_id)
         {
             room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
 
             if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
             {
@@ -85,6 +103,10 @@ namespace WALL_R.Controllers
         [HttpPost("room/addDevice")]
         public IActionResult addDeviceForRoom(int room_id, int device_id, int device_type_id, string name)
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
             room_management_dbContext context = getContext();
             bool error = false;
             string error_message = "Fehlerhafte Angaben:\n";
@@ -118,6 +140,10 @@ namespace WALL_R.Controllers
         public IActionResult addComponentForDevice(int device_id, int component_id, int component_type_id, string name, string serial_number)
         {
             room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
             bool error = false;
             string error_message = "Fehlerhafte Angaben:\n";
 
@@ -149,6 +175,10 @@ namespace WALL_R.Controllers
         [HttpGet("defecttypes")]
         public IActionResult GetAllDefectTypes()
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
             room_management_dbContext context = getContext();
 
             return Ok(context.DefectTypes);
@@ -158,6 +188,10 @@ namespace WALL_R.Controllers
         public IActionResult DeleteDefectType(int defect_type_id)
         {
             room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
 
             DefectTypes defectTypeToDelete = context.DefectTypes.Where(f => f.Id == defect_type_id).First();
             context.DefectTypes.Remove(defectTypeToDelete);
@@ -171,6 +205,10 @@ namespace WALL_R.Controllers
         public IActionResult UpdateDefectType(string defect_type_name)
         {
             room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
 
             DefectTypes defectType = new DefectTypes();
             defectType.Name = defect_type_name;

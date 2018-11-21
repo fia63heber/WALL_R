@@ -51,5 +51,43 @@ namespace WALL_R.Libraries
             context.Sessions.RemoveRange(account_sessions);
             context.SaveChanges();
         }
+
+        public static bool checkAuthentication(string flag, string token)
+        {
+            room_management_dbContext context = getContext();
+            var sessions = context.Sessions.Where(f => f.Token == token);
+            if (sessions.Count() == 0)
+            {
+                return false;
+            }
+
+            Sessions session = sessions.First();
+            if (session == null || session.AccountId == null || session.ExpiringDate == null || session.ExpiringDate < DateTime.Now)
+            {
+                return false;
+            }
+
+            context.Sessions.Where(f => f.Token == token).First().ExpiringDate = DateTime.Now.AddMinutes(20);
+            context.SaveChanges();
+
+            var accounts = context.Accounts.Where(f => f.Id == session.AccountId);
+            if (accounts.Count() > 0)
+            {
+                if (flag == "general")
+                {
+                    return true;
+                }
+                if (flag == "admin" && accounts.First().Id == 1)
+                {
+                    return true;
+                }
+                if (flag == "owner" && context.Rooms.Where(f => f.OwnerId == accounts.First().Id).Count() > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

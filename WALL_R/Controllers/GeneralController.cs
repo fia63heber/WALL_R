@@ -10,6 +10,11 @@ namespace WALL_R.Controllers
     [Route("api/[controller]")]
     public class GeneralController : Controller
     {
+        private bool checkAuthentication()
+        {
+            return Libraries.SessionManager.checkAuthentication("general", HttpContext.Request.Cookies["session"]);
+        }
+
         private room_management_dbContext getContext()
         {
             return new room_management_dbContext();
@@ -18,6 +23,11 @@ namespace WALL_R.Controllers
         [HttpGet("rooms")]
         public IActionResult GetRooms()
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+
             // Get database context
             room_management_dbContext context = getContext();
             if (Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]) == null)
@@ -34,6 +44,11 @@ namespace WALL_R.Controllers
         [HttpGet("room/{room_id}/defects")]
         public IActionResult GetDefectsForRoom(int room_id)
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+
             room_management_dbContext context = getContext();
             //check if room exists
             if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
@@ -57,6 +72,10 @@ namespace WALL_R.Controllers
         [HttpGet("devices/{room_id}")]
         public IActionResult GetDevicesForRoom(int room_id)
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
             // Get database context
             room_management_dbContext context = getContext();
             // Check if room exists
@@ -77,6 +96,10 @@ namespace WALL_R.Controllers
         [HttpGet("device/{id}")]
         public IActionResult GetDevice(int id)
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
             room_management_dbContext context = getContext();
             var device = context.Devices.Where(f => f.Id == id);
             if (device.Count() == 0)
@@ -90,6 +113,10 @@ namespace WALL_R.Controllers
         [HttpPost("defect")]
         public IActionResult CreateDefect(int component_id, int defect_type_id, int state_id, int priority_id, string name, string entry_comment, string owner_comment)
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
             room_management_dbContext context = getContext();
             Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
             if (user == null)
@@ -157,6 +184,11 @@ namespace WALL_R.Controllers
         [HttpGet("writer/defects")]
         public IActionResult GetDefectsForWriter()
         {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+
             room_management_dbContext context = getContext();
             Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
 
