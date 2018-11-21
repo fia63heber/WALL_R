@@ -54,7 +54,8 @@ namespace WALL_R.Controllers
         public IActionResult Logout()
         {
             room_management_dbContext context = getContext();
-            Accounts account = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+            string token = HttpContext.Request.Cookies["session"];
+            Accounts account = Libraries.SessionManager.getAccountForSession(token);
 
             if (account == null)
             {
@@ -63,9 +64,8 @@ namespace WALL_R.Controllers
 
             foreach (Sessions session in context.Sessions.Where(f => f.AccountId == account.Id))
             {
-                context.Sessions.Remove(session);
+                Libraries.SessionManager.clearSessionsByToken(token);
             }
-            
             return Ok();
         }
     }

@@ -12,6 +12,7 @@ namespace WALL_R.Libraries
         {
             return new room_management_dbContext();
         }
+        
 
         public static Accounts getAccountForSession(string token)
         {
@@ -32,6 +33,23 @@ namespace WALL_R.Libraries
             context.SaveChanges();
 
             return context.Accounts.Where(f => f.Id == session.AccountId).First();
+        }
+
+        public static void clearSessionsByToken(string token)
+        {
+            room_management_dbContext context = getContext();
+
+            var sessions = context.Sessions.Where(f => f.Token == token);
+            if (sessions.Count() == 0)
+            {
+                return;
+            }
+            int? account_id = sessions.First().AccountId;
+
+            var account_sessions = context.Sessions.Where(f => f.AccountId == account_id);
+
+            context.Sessions.RemoveRange(account_sessions);
+            context.SaveChanges();
         }
     }
 }
