@@ -33,8 +33,6 @@ namespace WALL_R.Controllers
             {
                 return NotFound("Falsche Accountdaten");
             }
-
-
             account = context.Accounts.Where(f => f.Email == email).First();
             string token = Guid.NewGuid().ToString();
             Sessions session = new Sessions();
@@ -43,6 +41,8 @@ namespace WALL_R.Controllers
             session.ExpiringDate = DateTime.Now.AddMinutes(20);
             context.Sessions.Add(session);
             context.SaveChanges();
+
+            Response.Cookies.Append("session", token);
 
             Dictionary<String, String> result = new Dictionary<String, String>();
             result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account.Id));
