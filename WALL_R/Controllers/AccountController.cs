@@ -19,7 +19,8 @@ namespace WALL_R.Controllers
         public IActionResult Login(string email, string password)
         {
             room_management_dbContext context = getContext();
-            if (Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]) == null)
+            Accounts account = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+            if (account == null)
             {
                 Logout();
             }
@@ -43,11 +44,13 @@ namespace WALL_R.Controllers
             context.Sessions.Add(session);
             context.SaveChanges();
 
-            Response.Cookies.Append("session", token);
+            Dictionary<String, String> result = new Dictionary<String, String>();
+            result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account));
+            result.Add("name", account.Prename + " " + account.Surname);
 
+            Json(result);
 
-
-            return Ok();
+            return Ok(Json(result));
         }
 
         [HttpPost("logout")]

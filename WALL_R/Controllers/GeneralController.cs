@@ -208,5 +208,17 @@ namespace WALL_R.Controllers
 
             return Ok(context.DefectTypes);
         }
+
+        [HttpGet("device/{device_id}/components")]
+        public IActionResult GetComponentsForDevice(int device_id)
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            room_management_dbContext context = getContext();
+
+            return Ok(context.Components.Where(f => f.DeviceId == device_id));
+        }
     }
 }

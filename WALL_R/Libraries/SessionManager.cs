@@ -86,8 +86,21 @@ namespace WALL_R.Libraries
                     return true;
                 }
             }
-
             return false;
+        }
+
+        public static string GetRightgroupForAccount(Accounts account)
+        {
+            room_management_dbContext context = getContext();
+            if (account.Id == 1)
+            {
+                return "admin";
+            }
+            if (context.Rooms.Where(f => f.OwnerId == account.Id).Count() > 0)
+            {
+                return "owner";
+            }
+            return "general";
         }
     }
 }

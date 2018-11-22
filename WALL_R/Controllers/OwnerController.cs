@@ -88,7 +88,7 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("room/addDevice")]
-        public IActionResult addDeviceForRoom(int room_id, int device_type_id, string name)
+        public IActionResult addDeviceForRoom(int room_id, int device_type_id, string name, string serial_number)
         {
             if (!checkAuthentication())
             {
@@ -117,6 +117,7 @@ namespace WALL_R.Controllers
             device.RoomId = room_id;
             device.DeviceTypeId = device_type_id;
             device.Name = name;
+            device.SerialNumber = serial_number;
 
             context.Devices.Add(device);
             context.SaveChanges();
