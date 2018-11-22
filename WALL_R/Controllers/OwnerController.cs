@@ -88,7 +88,7 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("room/addDevice")]
-        public IActionResult addDeviceForRoom(int room_id, int device_id, int device_type_id, string name)
+        public IActionResult addDeviceForRoom(int room_id, int device_type_id, string name)
         {
             if (!checkAuthentication())
             {
