@@ -28,6 +28,11 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
 
+            if(String.IsNullOrEmpty(room_number))
+            {
+                return NotFound("Raummnummer nicht gültig.");
+            }
+
             room_management_dbContext context = getContext();
             Rooms room = new Rooms();
 
@@ -38,7 +43,26 @@ namespace WALL_R.Controllers
             return Ok();
         }
 
+        [HttpGet("account")]
+        public IActionResult GetAccounts()
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
 
+            // Get database context
+            room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            // Get all account:
+            var accounts = context.Accounts;
+
+            // Return a success report including all accounts to the frontend:
+            return Ok(accounts);
+        }
 
         [HttpPost("room/newOwner")]
         public IActionResult SetOwnerForRoom(int room_id, int owner_id)
@@ -47,6 +71,14 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
+            if (room_id == null)
+            {
+                return NotFound("Keine Raumnummer angegeben.");
+            }
+            if (owner_id == null)
+            {
+                return NotFound("Bentzernummer nicht gültig.");
+            }
 
             room_management_dbContext context = getContext();
             if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
@@ -54,9 +86,14 @@ namespace WALL_R.Controllers
                 return NotFound();
             }
 
+            if (context.Accounts.Where(f => f.Id == owner_id).Count() == 0)
+            {
+                return NotFound();
+            }
+
             context.Rooms.Where(f => f.Id == room_id).First().OwnerId = owner_id;
-            return Ok();
             context.SaveChanges();
+            return Ok();
         }
     }
 }

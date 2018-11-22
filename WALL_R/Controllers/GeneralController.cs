@@ -196,5 +196,17 @@ namespace WALL_R.Controllers
 
             return Ok(defects);
         }
+
+        [HttpGet("defecttypes")]
+        public IActionResult GetAllDefectTypes()
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            room_management_dbContext context = getContext();
+
+            return Ok(context.DefectTypes);
+        }
     }
 }

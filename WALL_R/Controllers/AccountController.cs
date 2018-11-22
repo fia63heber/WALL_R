@@ -55,6 +55,7 @@ namespace WALL_R.Controllers
         {
             room_management_dbContext context = getContext();
             string token = HttpContext.Request.Cookies["session"];
+            Libraries.SessionManager.clearSessionsByToken(token);
             Accounts account = Libraries.SessionManager.getAccountForSession(token);
 
             if (account == null)
@@ -62,10 +63,7 @@ namespace WALL_R.Controllers
                 return NotFound();
             }
 
-            foreach (Sessions session in context.Sessions.Where(f => f.AccountId == account.Id))
-            {
-                Libraries.SessionManager.clearSessionsByToken(token);
-            }
+            
             return Ok();
         }
     }

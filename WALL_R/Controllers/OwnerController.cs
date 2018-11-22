@@ -20,13 +20,15 @@ namespace WALL_R.Controllers
             return new room_management_dbContext();
         }
 
-        [HttpGet("owner/{owner_id}/defects")]
-        public IActionResult GetDefectsForOwner(int owner_id)
+        [HttpGet("owner/defects")]
+        public IActionResult GetDefectsForOwner()
         {
             if (!checkAuthentication())
             {
                 return Unauthorized();
             }
+
+            int owner_id = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]).Id;
 
             room_management_dbContext context = getContext();
             var defects = new List<Defects>();
@@ -43,21 +45,6 @@ namespace WALL_R.Controllers
             }
 
             return Ok(defects);
-        }
-
-        [HttpPost("owner/defects")]
-        public IActionResult GetDefectsForOwner(int defect_id, int priority_id)
-        {
-            room_management_dbContext context = getContext();
-            if (!checkAuthentication())
-            {
-                return Unauthorized();
-            }
-
-            context.Defects.Where(f => f.Id == defect_id).First().PriorityId = priority_id;
-            context.SaveChanges();
-
-            return Ok();
         }
 
         [HttpPost("defect/changePriority")]
@@ -172,18 +159,6 @@ namespace WALL_R.Controllers
             return Ok();
         }
 
-        [HttpGet("defecttypes")]
-        public IActionResult GetAllDefectTypes()
-        {
-            if (!checkAuthentication())
-            {
-                return Unauthorized();
-            }
-            room_management_dbContext context = getContext();
-
-            return Ok(context.DefectTypes);
-        }
-
         [HttpDelete("defecttype")]
         public IActionResult DeleteDefectType(int defect_type_id)
         {
@@ -217,6 +192,6 @@ namespace WALL_R.Controllers
             context.SaveChanges();
 
             return Ok();
-        }  
+        }
     }
 }
