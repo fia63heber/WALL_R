@@ -218,7 +218,23 @@ namespace WALL_R.Controllers
             }
             room_management_dbContext context = getContext();
 
-            return Ok(context.Components.Where(f => f.DeviceId == device_id));
+            int general_id = context.Components.Where(f => f.Name == "General").First().Id;
+
+            return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId != general_id));
+        }
+
+        [HttpGet("device/{device_id}/general_component")]
+        public IActionResult GetGeneralComponentForDevice(int device_id)
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            room_management_dbContext context = getContext();
+
+            int general_id = context.Components.Where(f => f.Name == "General").First().Id;
+
+            return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId == general_id));
         }
     }
 }

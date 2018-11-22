@@ -34,18 +34,18 @@ namespace WALL_R.Controllers
                 return NotFound("Falsche Accountdaten");
             }
 
-           
-            string token = Guid.NewGuid().ToString();
 
+            account = context.Accounts.Where(f => f.Email == email).First();
+            string token = Guid.NewGuid().ToString();
             Sessions session = new Sessions();
             session.Token = token;
-            session.AccountId = context.Accounts.Where(f => f.Email == email).First().Id;
+            session.AccountId = account.Id;
             session.ExpiringDate = DateTime.Now.AddMinutes(20);
             context.Sessions.Add(session);
             context.SaveChanges();
 
             Dictionary<String, String> result = new Dictionary<String, String>();
-            result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account));
+            result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account.Id));
             result.Add("name", account.Prename + " " + account.Surname);
 
             Json(result);
@@ -65,8 +65,6 @@ namespace WALL_R.Controllers
             {
                 return NotFound();
             }
-
-            
             return Ok();
         }
     }

@@ -89,14 +89,14 @@ namespace WALL_R.Libraries
             return false;
         }
 
-        public static string GetRightgroupForAccount(Accounts account)
+        public static string GetRightgroupForAccount(int account_id)
         {
             room_management_dbContext context = getContext();
-            if (account.Id == 1)
+            if (account_id == 1)
             {
                 return "admin";
             }
-            if (context.Rooms.Where(f => f.OwnerId == account.Id).Count() > 0)
+            if (context.Rooms.Where(f => f.OwnerId == account_id).Count() > 0)
             {
                 return "owner";
             }
