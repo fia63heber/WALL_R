@@ -122,7 +122,7 @@ namespace WALL_R.Controllers
             int new_device_id = context.Devices.Add(device).Entity.Id;
             
             Components newComponent = new Components();
-            newComponent.Id = new_device_id;
+            newComponent.DeviceId = new_device_id;
             newComponent.ComponentTypeId = 1;
             newComponent.Name = "General Dummy";
 
