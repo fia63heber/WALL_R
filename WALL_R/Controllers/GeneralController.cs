@@ -330,7 +330,7 @@ namespace WALL_R.Controllers
             return Ok(context.ComponentTypes);
         }
 
-        [HttpGet("defecttype")]
+        [HttpGet("defecttypes")]
         public IActionResult GetDefectTypes()
         {
             room_management_dbContext context = getContext();
@@ -340,6 +340,18 @@ namespace WALL_R.Controllers
             }
 
             return Ok(context.DefectTypes);
+        }
+
+        [HttpGet("devicetypes")]
+        public IActionResult GetDeviceTypes()
+        {
+            room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+
+            return Ok(context.DeviceTypes);
         }
     }
 }
