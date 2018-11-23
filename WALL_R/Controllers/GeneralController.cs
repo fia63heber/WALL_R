@@ -168,6 +168,7 @@ namespace WALL_R.Controllers
             newDefect.EntryComment = entry_comment;
             newDefect.StateId = 1;
             context.Add(newDefect);
+            context.SaveChanges();
 
             return Ok();
         }
