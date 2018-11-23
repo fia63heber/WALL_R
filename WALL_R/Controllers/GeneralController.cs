@@ -111,7 +111,7 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("defect")]
-        public IActionResult CreateDefect(int component_id, int defect_type_id, int state_id, int priority_id, string name, string entry_comment, string owner_comment)
+        public IActionResult CreateDefect(int component_id, int defect_type_id, int priority_id, string name, string entry_comment)
         {
             if (!checkAuthentication())
             {
@@ -148,16 +148,6 @@ namespace WALL_R.Controllers
                 newDefect.DefectTypeId = defect_type_id;
             }
 
-            if (context.States.Count(f => f.Id == state_id) == 0)
-            {
-                error = true;
-                error_message += "\n- Es wurde kein gültiger Status angegeben";
-            }
-            else
-            {
-                newDefect.StateId = state_id;
-            }
-
             if (context.Priorities.Count(f => f.Id == priority_id) == 0)
             {
                 error = true;
@@ -176,7 +166,7 @@ namespace WALL_R.Controllers
 
             newDefect.Name = name;
             newDefect.EntryComment = entry_comment;
-            newDefect.OwnerComment = owner_comment;
+            newDefect.StateId = 1;
             context.Add(newDefect);
 
             return Ok();
@@ -198,6 +188,8 @@ namespace WALL_R.Controllers
             return Ok(defects);
         }
 
+
+
         [HttpGet("defecttypes")]
         public IActionResult GetAllDefectTypes()
         {
@@ -208,6 +200,18 @@ namespace WALL_R.Controllers
             room_management_dbContext context = getContext();
 
             return Ok(context.DefectTypes);
+        }
+
+        [HttpGet("states")]
+        public IActionResult GetAllStates()
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            room_management_dbContext context = getContext();
+
+            return Ok(context.States);
         }
 
         [HttpGet("device/{device_id}/components")]
