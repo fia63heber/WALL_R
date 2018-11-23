@@ -141,7 +141,7 @@ namespace WALL_R.Controllers
             if (context.DefectTypes.Count(f => f.Id == defect_type_id) == 0)
             {
                 error = true;
-                error_message += "- Es wurde kein gültiger Fehlertyp angegeben\n";
+                error_message += "- Es wurde kein gültiger Fehlertyp angegeben";
             }
             else
             {
@@ -151,7 +151,7 @@ namespace WALL_R.Controllers
             if (context.States.Count(f => f.Id == state_id) == 0)
             {
                 error = true;
-                error_message += "- Es wurde kein gültiger Status angegeben\n";
+                error_message += "\n- Es wurde kein gültiger Status angegeben";
             }
             else
             {
@@ -161,7 +161,7 @@ namespace WALL_R.Controllers
             if (context.Priorities.Count(f => f.Id == priority_id) == 0)
             {
                 error = true;
-                error_message += "- Es wurde keine gültige Priorität angegeben\n";
+                error_message += "\n- Es wurde keine gültige Priorität angegeben";
             }
             else
             {
@@ -177,7 +177,8 @@ namespace WALL_R.Controllers
             newDefect.Name = name;
             newDefect.EntryComment = entry_comment;
             newDefect.OwnerComment = owner_comment;
-            
+            context.Add(newDefect);
+
             return Ok();
         }
 
@@ -235,6 +236,98 @@ namespace WALL_R.Controllers
             int general_id = context.Components.Where(f => f.Name == "General").First().Id;
 
             return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId == general_id));
+        }
+
+        [HttpPost("defect")]
+        public IActionResult CreateComponent(int component_id, int defect_type_id, int state_id, int priority_id, string name, string entry_comment, string owner_comment)
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            room_management_dbContext context = getContext();
+            Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+            
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            Defects newDefect = new Defects();
+
+            bool error = false;
+            string error_message = "Fehlerhafte Angaben:\n";
+
+            if (context.Components.Count(f => f.Id == component_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde kein gültiger Geräte-Komponent angegeben\n";
+            }
+            else
+            {
+                newDefect.ComponentId = component_id;
+            }
+
+            if (context.DefectTypes.Count(f => f.Id == defect_type_id) == 0)
+            {
+                error = true;
+                error_message += "- Es wurde kein gültiger Fehlertyp angegeben";
+            }
+            else
+            {
+                newDefect.DefectTypeId = defect_type_id;
+            }
+
+            if (context.States.Count(f => f.Id == state_id) == 0)
+            {
+                error = true;
+                error_message += "\n- Es wurde kein gültiger Status angegeben";
+            }
+            else
+            {
+                newDefect.StateId = state_id;
+            }
+
+            if (context.Priorities.Count(f => f.Id == priority_id) == 0)
+            {
+                error = true;
+                error_message += "\n- Es wurde keine gültige Priorität angegeben";
+            }
+            else
+            {
+                newDefect.PriorityId = priority_id;
+            }
+            newDefect.WriterId = user.Id;
+
+            if (error)
+            {
+                return NotFound(error_message);
+            }
+
+            newDefect.Name = name;
+            newDefect.EntryComment = entry_comment;
+            newDefect.OwnerComment = owner_comment;
+            int newDefectId = context.Add(newDefect).Entity.Id;
+
+            Components newComponent = new Components();
+            newComponent.Id = newDefectId;
+            newComponent.ComponentTypeId = 1;
+            newComponent.Name = "GENERAL";
+
+            context.Add(newComponent);
+            context.SaveChanges();
+
+            return Ok();
+        }
+
+        [HttpGet("componenttypes")]
+        public IActionResult GetAllComponentTypes()
+        {
+            room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            return Ok(context.ComponentTypes);
         }
     }
 }
