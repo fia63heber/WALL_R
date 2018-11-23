@@ -119,10 +119,11 @@ namespace WALL_R.Controllers
             device.Name = name;
             device.SerialNumber = serial_number;
 
-            int new_device_id = context.Devices.Add(device).Entity.Id;
+            var deviceTracking = context.Devices.Add(device);
+            context.SaveChanges();
             
             Components newComponent = new Components();
-            newComponent.DeviceId = new_device_id;
+            newComponent.DeviceId = deviceTracking.Entity.Id;
             newComponent.ComponentTypeId = 1;
             newComponent.Name = "General Dummy";
 
