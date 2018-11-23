@@ -238,7 +238,7 @@ namespace WALL_R.Controllers
             return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId == general_id));
         }
 
-        [HttpPost("defect")]
+        [HttpPost("component")]
         public IActionResult CreateComponent(int component_id, int defect_type_id, int state_id, int priority_id, string name, string entry_comment, string owner_comment)
         {
             if (!checkAuthentication())
