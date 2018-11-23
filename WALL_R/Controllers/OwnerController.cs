@@ -132,7 +132,7 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("device/addComponent")]
-        public IActionResult addComponentForDevice(int device_id, int component_id, int component_type_id, string name, string serial_number)
+        public IActionResult addComponentForDevice(int device_id, int component_type_id, string name)
         {
             room_management_dbContext context = getContext();
             if (!checkAuthentication())
@@ -182,8 +182,7 @@ namespace WALL_R.Controllers
 
             return Ok();
         }
-
-
+        
         [HttpPost("defecttype")]
         public IActionResult UpdateDefectType(string defect_type_name)
         {
@@ -200,6 +199,18 @@ namespace WALL_R.Controllers
             context.SaveChanges();
 
             return Ok();
+        }
+
+        [HttpGet("defecttype")]
+        public IActionResult GetDefectTypes()
+        {
+            room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            
+            return Ok(context.DefectTypes);
         }
     }
 }
