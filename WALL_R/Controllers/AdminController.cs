@@ -108,7 +108,7 @@ namespace WALL_R.Controllers
                     return NotFound();
                 }
 
-                // Get Room that has to be changed:
+                // Get room that has to be changed:
                 Rooms room = rooms.First();
 
                 // Set new owner_id for room

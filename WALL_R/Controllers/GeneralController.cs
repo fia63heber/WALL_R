@@ -301,7 +301,7 @@ namespace WALL_R.Controllers
                     return NotFound();
                 }
 
-                // Save general id:
+                // Get id of general components:
                 int general_id = general_component_types.First().Id;
 
                 // Get list of components including all but the "general" one identified by the general id:
@@ -342,7 +342,7 @@ namespace WALL_R.Controllers
                     return NotFound();
                 }
 
-                // Save general id:
+                // Get general id:
                 int general_id = general_component_types.First().Id;
 
                 // Get list of generalcomponents identified by the general id:

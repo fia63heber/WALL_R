@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using WALL_R.Models;
+using WALL_R.Libraries;
 
 namespace WALL_R.Controllers
 {
@@ -12,7 +13,7 @@ namespace WALL_R.Controllers
     {
         private bool checkAuthentication()
         {
-            return Libraries.SessionManager.checkAuthentication("owner", HttpContext.Request.Cookies["session"]);
+            return SessionManager.checkAuthentication("owner", HttpContext.Request.Cookies["session"]);
         }
 
         private room_management_dbContext getContext()
@@ -27,64 +28,159 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-
-            int owner_id = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]).Id;
-
-            room_management_dbContext context = getContext();
-            var defects = new List<Defects>();
-
-            foreach (Rooms room in context.Rooms.Where(f => f.OwnerId == owner_id))
+            try
             {
-                foreach (Devices device in context.Devices.Where(f => f.RoomId == room.Id))
+                room_management_dbContext context = getContext();
+
+                // Get user who sent request
+                int owner_id = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]).Id;
+
+                // Create empty list of defects
+                var defects = new List<Defects>();
+
+                // Fill list of defects in a loop:
+                foreach (Rooms room in context.Rooms.Where(f => f.OwnerId == owner_id))
                 {
-                    foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
+                    foreach (Devices device in context.Devices.Where(f => f.RoomId == room.Id))
                     {
-                        defects.AddRange(context.Defects.Where(f => f.ComponentId == component.Id).ToList());
+                        foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
+                        {
+                            defects.AddRange(context.Defects.Where(f => f.ComponentId == component.Id).ToList());
+                        }
                     }
                 }
-            }
 
-            return Ok(defects);
+                // Check if list of device types is empty and if so send "404 - Not Found" to the frontend:
+                if (defects.Count() > 0)
+                {
+                    NotFound();
+                }
+
+                // Return a success report including all defects to the frontend:
+                return Ok(defects);
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpPost("defect/changePriority")]
         public IActionResult changePriorityForDefect(int defect_id, int priority_id)
         {
-            room_management_dbContext context = getContext();
-
-            context.Defects.Where(f => f.Id == defect_id).First().PriorityId = priority_id;
-            context.SaveChanges();
-
-            return Ok();
-        }
-
-        [HttpPost("room/addPlanFile")]
-        public IActionResult addPlanfileForRoom(int room_id)
-        {
-            room_management_dbContext context = getContext();
             if (!checkAuthentication())
             {
                 return Unauthorized();
             }
-
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+            try
             {
-                return NotFound();
+                room_management_dbContext context = getContext();
+
+                // Create empty list of defects:
+                List<Defects> defects = context.Defects.Where(f => f.Id == defect_id).ToList();
+
+                // Check if priority id exists and if not send "404 - Not Found" to the frontend:
+                if (context.Priorities.Where(f => f.Id == priority_id).Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Check if list of defects is empty and if so send "404 - Not Found" to the frontend:
+                if (defects.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Get defect that has to be changed:
+                Defects defect = defects.First();
+
+                // Set new priority id for defect:
+                defect.PriorityId = priority_id;
+
+                // Change entry in database context:
+                context.Update(defect);
+
+                // Save changes in context to database:
+                context.SaveChanges();
+
+                // Return a success report to the frontend:
+                return Ok();
             }
-
-
-            int? file_id = context.Rooms.Where(f => f.Id == room_id).First().PictureFileId;
-
-            if (file_id == null)
+            catch
             {
-                Files newFile = new Files();
-                newFile.FilePath = "";
-                //context.Add()
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
             }
+        }
 
-            context.Files.Where(f => f.Id == file_id).First().FilePath = "";
+        [HttpPost("room/planFile")]
+        public IActionResult addPlanfileForRoom(int room_id, string file_content)
+        {
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            try
+            {
+                room_management_dbContext context = getContext();
 
-            return Ok();
+                List <Rooms> rooms = context.Rooms.Where(f => f.Id == room_id).ToList();
+
+                // Check if room id exists and if not send "404 - Not Found" to the frontend:
+                if (rooms.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Get id of room plan files:
+                int file_id = rooms.First().PictureFileId;
+
+                // Get list of files:
+                List<Files> files = context.Files.Where(f => f.Id == file_id).ToList();
+
+                // Create physical file:
+                string file_name = "roomplan" + room_id + ".jpeg";
+                if (!FileManager.CreateFile(file_name, file_content))
+                {
+                    // Return a "500 - Internal Server Error" error message to the frontend:
+                    return StatusCode(500);
+                }
+                
+                // Check if list of files is empty:
+                if (files.Count == 0)
+                {
+                    // Create model for new file:
+                    Files newFile = new Files();
+
+
+                    newFile.FilePath = "";
+                    context.Add(newFile);
+                }
+                else {
+                    Files file = files.First();
+
+                    file.FilePath = "";
+
+                    context.Update(file);
+                }
+
+                context.SaveChanges();
+                return Ok();
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
+        }
+
+        [HttpGet("room/{room_id}/planFile")]
+        public IActionResult getPlanfileForRoom(int room_id)
+        {
+            string file_name = "roomplan" + room_id + ".jpeg";
+            var image = System.IO.File.OpenRead(FileManager.GetFilePath(file_name));
+            return File(image, "image/jpeg");
         }
 
         [HttpPost("room/addDevice")]
