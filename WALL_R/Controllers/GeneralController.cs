@@ -32,9 +32,9 @@ namespace WALL_R.Controllers
                 room_management_dbContext context = getDatabaseContext();
 
                 // Get all rooms:
-                var rooms = context.Rooms;
+                List<Rooms> rooms = context.Rooms.ToList();
 
-                // Check if rooms is empty and if so send "404 - Not Found" to the frontend:
+                // Check if list of rooms is empty and if so send "404 - Not Found" to the frontend:
                 if (rooms.Count() == 0)
                 {
                     return NotFound();
@@ -67,9 +67,10 @@ namespace WALL_R.Controllers
                     return NotFound();
                 }
 
-                // Create empty 
+                // Create empty list of defects
                 List<Defects> defects = new List<Defects>();
 
+                // Fill list of defects in a loop:
                 foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
                 {
                     foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
@@ -78,6 +79,7 @@ namespace WALL_R.Controllers
                     }
                 }
 
+                // Return a "200 - OK" success report including all rooms to the frontend:
                 return Ok(defects);
             }
             catch
@@ -94,40 +96,35 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-            // Get database context
-            room_management_dbContext context = getDatabaseContext();
-            // Check if room exists
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+            try
             {
-                return NotFound();
+                room_management_dbContext context = getDatabaseContext();
+
+                // Check if room exists and if not send "404 - Not Found" to the frontend:
+                if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Get all devices where room_id equals received room_id:
+                var devices = context.Devices.Where(f => f.RoomId == room_id);
+
+                // Check if list of devices is empty and if so send "404 - Not Found" to the frontend:
+                if (devices.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return a success report including found devices to the frontend:
+                return Ok(devices);
             }
-            // Get all devices where room_id equals received room_id:
-            var devices = context.Devices.Where(f => f.RoomId == room_id);
-            if (devices.Count() == 0)
+            catch
             {
-                return NotFound();
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
             }
-            // Return a success report including found devices to the frontend:
-            return Ok(devices);
         }
-
-        [HttpGet("device/{id}")]
-        public IActionResult GetDevice(int id)
-        {
-            if (!checkAuthentication())
-            {
-                return Unauthorized();
-            }
-            room_management_dbContext context = getDatabaseContext();
-            var device = context.Devices.Where(f => f.Id == id);
-            if (device.Count() == 0)
-            {
-                return NotFound();
-            }
-
-            return Ok(device);
-        }
-
+        
         [HttpPost("defect")]
         public IActionResult CreateDefect(int component_id, int defect_type_id, int priority_id, string name, string entry_comment)
         {
@@ -219,7 +216,7 @@ namespace WALL_R.Controllers
             }
             catch
             {
-                // Return a success report including found devices to the frontend:
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }
@@ -237,10 +234,21 @@ namespace WALL_R.Controllers
             {
                 room_management_dbContext context = getDatabaseContext();
 
-                return Ok(context.DefectTypes);
+                // Get all defecttypes
+                List<DefectTypes> defect_types = context.DefectTypes.ToList();
+
+                // Check if defects is empty and if so send "404 - Not Found" to the frontend:
+                if (defect_types.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return a success report including found devices to the frontend:
+                return Ok(defect_types);
             }
             catch
             {
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }
@@ -253,12 +261,23 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-            room_management_dbContext context = getDatabaseContext();
+                room_management_dbContext context = getDatabaseContext();
 
-            return Ok(context.States);
+                // Get all states
+                List<States> states = context.States.ToList();
+
+                // Check if list of states is empty and if so send "404 - Not Found" to the frontend:
+                if (states.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return a success report including found defect_types to the frontend:
+                return Ok(states);
             }
             catch
             {
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }
@@ -272,13 +291,34 @@ namespace WALL_R.Controllers
             }
             try {
                 room_management_dbContext context = getDatabaseContext();
-            
-                int general_id = context.Components.Where(f => f.Name == "General").First().Id;
 
-                return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId != general_id));
+                // Get list of general component types
+                List<ComponentTypes> general_component_types = context.ComponentTypes.Where(f => f.Name == "General").ToList();
+
+                // Check if list of general_components is empty and if so send "404 - Not Found" to the frontend:
+                if (general_component_types.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Save general id:
+                int general_id = general_component_types.First().Id;
+
+                // Get list of components including all but the "general" one identified by the general id:
+                List<Components> components = context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId != general_id).ToList();
+
+                // Check if list of components is empty and if so send "404 - Not Found" to the frontend:
+                if (components.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return a success report including found components to the frontend:
+                return Ok(components);
             }
             catch
             {
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }
@@ -292,14 +332,34 @@ namespace WALL_R.Controllers
             }
             try {
                 room_management_dbContext context = getDatabaseContext();
-
                 
-                int general_id = context.ComponentTypes.Where(f => f.Name == "General").First().Id;
+                // Get list of general component types
+                List<ComponentTypes> general_component_types = context.ComponentTypes.Where(f => f.Name == "General").ToList();
 
-                return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId == general_id));
+                // Check if list of general components is empty and if so send "404 - Not Found" to the frontend:
+                if (general_component_types.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Save general id:
+                int general_id = general_component_types.First().Id;
+
+                // Get list of generalcomponents identified by the general id:
+                List<Components> components = context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId != general_id).ToList();
+
+                // Check if list of components is empty and if so send "404 - Not Found" to the frontend:
+                if (components.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return a success report including the general component to the frontend:
+                return Ok(components.First());
             }
             catch
             {
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }
@@ -313,16 +373,22 @@ namespace WALL_R.Controllers
             }
             try {
                 room_management_dbContext context = getDatabaseContext();
-                
+
+                // Get list of component types identified by the general id:
                 List<ComponentTypes> component_types = context.ComponentTypes.Where(f => f.Name != "General").ToList();
+
+                // Check if list of component types is empty and if so send "404 - Not Found" to the frontend:
                 if (component_types.Count() == 0)
                 {
                     return NotFound();
                 }
+
+                // Return a success report including all component types to the frontend:
                 return Ok(component_types);
             }
             catch
             {
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }
@@ -337,16 +403,21 @@ namespace WALL_R.Controllers
             }
             try
             {
+                // Get list of device types identified by the general id:
                 List<DeviceTypes> device_types = context.DeviceTypes.ToList();
 
+                // Check if list of device types is empty and if so send "404 - Not Found" to the frontend:
                 if (device_types.Count() > 0)
                 {
                     NotFound();
                 }
+
+                // Return a success report including all device types to the frontend:
                 return Ok(device_types);
             }
             catch
             {
+                // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
             }
         }

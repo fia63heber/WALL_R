@@ -70,18 +70,18 @@ namespace WALL_R.Libraries
             context.Sessions.Where(f => f.Token == token).First().ExpiringDate = DateTime.Now.AddMinutes(20);
             context.SaveChanges();
 
-            var accounts = context.Accounts.Where(f => f.Id == session.AccountId);
+            List<Accounts> accounts = context.Accounts.Where(f => f.Id == session.AccountId).ToList();
             if (accounts.Count() > 0)
             {
                 if (flag == "general")
                 {
                     return true;
                 }
-                if (flag == "admin" && accounts.First().Id == 1)
+                if (flag == "owner" && (context.Rooms.Where(f => f.OwnerId == accounts.First().Id).Count() > 0 || accounts.First().Id == 1))
                 {
                     return true;
                 }
-                if (flag == "owner" && context.Rooms.Where(f => f.OwnerId == accounts.First().Id).Count() > 0)
+                if (flag == "admin" && accounts.First().Id == 1)
                 {
                     return true;
                 }

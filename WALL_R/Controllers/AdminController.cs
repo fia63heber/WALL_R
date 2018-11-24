@@ -23,24 +23,34 @@ namespace WALL_R.Controllers
         [HttpPost("room")]
         public IActionResult CreateRoom(string room_number)
         {
-            if(!checkAuthentication())
+            if (!checkAuthentication())
             {
                 return Unauthorized();
             }
-
-            if(String.IsNullOrEmpty(room_number))
+            try
             {
-                return NotFound("Raummnummer nicht gültig.");
+                room_management_dbContext context = getContext();
+
+                // Create model for new room:
+                Rooms room = new Rooms();
+
+                // Set roomnumber for the new room:
+                room.RoomNumber = room_number;
+
+                // Add new room to database context
+                context.Add(room);
+
+                // Save changes in context permanently to the database
+                context.SaveChanges();
+
+                // Return a "200 - OK" success report to the frontend:
+                return Ok();
             }
-
-            room_management_dbContext context = getContext();
-            Rooms room = new Rooms();
-
-            room.RoomNumber = room_number;
-            context.Add(room);
-            context.SaveChanges();
-
-            return Ok();
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpGet("account")]
@@ -50,18 +60,26 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-
-            // Get database context
-            room_management_dbContext context = getContext();
-            if (!checkAuthentication())
+            try
             {
-                return Unauthorized();
-            }
-            // Get all account:
-            var accounts = context.Accounts;
+                // Get database context
+                room_management_dbContext context = getContext();
+                if (!checkAuthentication())
+                {
+                    return Unauthorized();
+                }
 
-            // Return a success report including all accounts to the frontend:
-            return Ok(accounts);
+                // Get all existing accounts:
+                var accounts = context.Accounts;
+
+                // Return a "200 - OK" success report including all accounts to the frontend:
+                return Ok(accounts);
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpPost("room/newOwner")]
@@ -71,29 +89,46 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-            if (room_id == null)
+            try
             {
-                return NotFound("Keine Raumnummer angegeben.");
-            }
-            if (owner_id == null)
-            {
-                return NotFound("Bentzernummer nicht gültig.");
-            }
+                room_management_dbContext context = getContext();
+                
+                // Get all rooms where room_id equals received room_id:
+                List<Rooms> rooms = context.Rooms.Where(f => f.Id == room_id).ToList();
 
-            room_management_dbContext context = getContext();
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
-            {
-                return NotFound();
-            }
+                // Check if list of rooms is empty and if so send "404 - Not Found" to the frontend:
+                if (rooms.Count() == 0)
+                {
+                    return NotFound();
+                }
 
-            if (context.Accounts.Where(f => f.Id == owner_id).Count() == 0)
-            {
-                return NotFound();
-            }
+                // Check if no accounts for given owner_id exist and if so send "404 - Not Found" to the frontend:
+                if (context.Accounts.Where(f => f.Id == owner_id).Count() == 0)
+                {
+                    return NotFound();
+                }
 
-            context.Rooms.Where(f => f.Id == room_id).First().OwnerId = owner_id;
-            context.SaveChanges();
-            return Ok();
+                // Get Room that has to be changed:
+                Rooms room = rooms.First();
+
+                // Set new owner_id for room
+                room.OwnerId = owner_id;
+
+                // Change entry in database context
+                context.Update(room);
+
+                // Save changes in context to database
+                context.SaveChanges();
+
+                // Return a "200 - OK" success report 
+                return Ok();
+            }
+            catch
+            {
+
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
     }
 }
