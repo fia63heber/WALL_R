@@ -240,11 +240,11 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-            room_management_dbContext context = getContext();
+                room_management_dbContext context = getContext();
             
-            int general_id = context.Components.Where(f => f.Name == "General").First().Id;
+                int general_id = context.Components.Where(f => f.Name == "General").First().Id;
 
-            return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId != general_id));
+                return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId != general_id));
             }
             catch
             {
@@ -260,11 +260,12 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-            room_management_dbContext context = getContext();
+                room_management_dbContext context = getContext();
 
-            int general_id = context.Components.Where(f => f.Name == "General").First().Id;
+                
+                int general_id = context.ComponentTypes.Where(f => f.Name == "General").First().Id;
 
-            return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId == general_id));
+                return Ok(context.Components.Where(f => f.DeviceId == device_id).Where(f => f.ComponentTypeId == general_id));
             }
             catch
             {
@@ -281,8 +282,8 @@ namespace WALL_R.Controllers
             }
             try {
                 room_management_dbContext context = getContext();
-
-                List<ComponentTypes> component_types = context.ComponentTypes.Where(f => f.Id != 1).ToList();
+                
+                List<ComponentTypes> component_types = context.ComponentTypes.Where(f => f.Name == "General").ToList();
                 if (component_types.Count() == 0)
                 {
                     NotFound();
@@ -303,8 +304,20 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
+            try
+            {
+                List<DeviceTypes> device_types = context.DeviceTypes.ToList();
 
-            return Ok(context.DeviceTypes);
+                if (device_types.Count() > 0)
+                {
+                    NotFound();
+                }
+                return Ok(device_types);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
         }
     }
 }
