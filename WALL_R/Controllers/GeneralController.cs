@@ -283,7 +283,7 @@ namespace WALL_R.Controllers
             try {
                 room_management_dbContext context = getContext();
                 
-                List<ComponentTypes> component_types = context.ComponentTypes.Where(f => f.Name == "General").ToList();
+                List<ComponentTypes> component_types = context.ComponentTypes.Where(f => f.Name != "General").ToList();
                 if (component_types.Count() == 0)
                 {
                     NotFound();
