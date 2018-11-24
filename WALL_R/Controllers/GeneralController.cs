@@ -183,10 +183,8 @@ namespace WALL_R.Controllers
 
             room_management_dbContext context = getContext();
             Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
-
-            var defects = context.Defects.Where(f => f.WriterId == user.Id);
-
-            return Ok(defects);
+            
+            return Ok(context.Defects);
         }
 
 

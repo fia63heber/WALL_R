@@ -202,6 +202,32 @@ namespace WALL_R.Controllers
             return Ok();
         }
 
-        
+        [HttpPost("defectstate")]
+        public IActionResult ChangeDefectState(int defect_id, int state_id)
+        {
+            room_management_dbContext context = getContext();
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            try
+            {
+                Defects defect = context.Defects.Where(f => f.StateId == state_id).First();
+
+                if (context == null)
+                {
+                    return NotFound();
+                }
+                defect.StateId = 2;
+                context.Update(defect);
+                context.SaveChanges();
+
+                return Ok();
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
     }
 }
