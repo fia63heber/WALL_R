@@ -202,7 +202,7 @@ namespace WALL_R.Controllers
             return Ok();
         }
 
-        [HttpPost("defectstate")]
+        [HttpPost("defect/changeState")]
         public IActionResult ChangeDefectState(int defect_id, int state_id)
         {
             room_management_dbContext context = getContext();

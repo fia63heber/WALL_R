@@ -15,7 +15,7 @@ namespace WALL_R.Controllers
             return Libraries.SessionManager.checkAuthentication("general", HttpContext.Request.Cookies["session"]);
         }
 
-        private room_management_dbContext getContext()
+        private room_management_dbContext getDatabaseContext()
         {
             return new room_management_dbContext();
         }
@@ -27,18 +27,26 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-
-            // Get database context
-            room_management_dbContext context = getContext();
-            if (Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]) == null)
+            try
             {
-                return Unauthorized();
-            }
-            // Get all rooms:
-            var rooms = context.Rooms;
+                room_management_dbContext context = getDatabaseContext();
 
-            // Return a success report including found devices to the frontend:
-            return Ok(rooms);
+                // Get all rooms:
+                var rooms = context.Rooms;
+
+                // Check if rooms is empty and if so send "404 - Not Found" to the frontend:
+                if (rooms.Count() == 0)
+                {
+                    return NotFound();
+                }
+                // Return a "200 - OK" success report including all rooms to the frontend:
+                return Ok(rooms);
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpGet("room/{room_id}/defects")]
@@ -49,7 +57,7 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
 
-            room_management_dbContext context = getContext();
+            room_management_dbContext context = getDatabaseContext();
             //check if room exists
             if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
             {
@@ -77,7 +85,7 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             // Get database context
-            room_management_dbContext context = getContext();
+            room_management_dbContext context = getDatabaseContext();
             // Check if room exists
             if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
             {
@@ -100,7 +108,7 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-            room_management_dbContext context = getContext();
+            room_management_dbContext context = getDatabaseContext();
             var device = context.Devices.Where(f => f.Id == id);
             if (device.Count() == 0)
             {
@@ -117,7 +125,7 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-            room_management_dbContext context = getContext();
+            room_management_dbContext context = getDatabaseContext();
             Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
             if (user == null)
             {
@@ -182,7 +190,7 @@ namespace WALL_R.Controllers
             }
             try
             {
-                room_management_dbContext context = getContext();
+                room_management_dbContext context = getDatabaseContext();
                 Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
 
                 return Ok(context.Defects);
@@ -204,7 +212,7 @@ namespace WALL_R.Controllers
             }
             try
             {
-                room_management_dbContext context = getContext();
+                room_management_dbContext context = getDatabaseContext();
 
                 return Ok(context.DefectTypes);
             }
@@ -222,15 +230,15 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-            room_management_dbContext context = getContext();
+            room_management_dbContext context = getDatabaseContext();
 
             return Ok(context.States);
             }
             catch
             {
                 return StatusCode(500);
-    }
-}
+            }
+        }
 
         [HttpGet("device/{device_id}/components")]
         public IActionResult GetComponentsForDevice(int device_id)
@@ -240,7 +248,7 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-                room_management_dbContext context = getContext();
+                room_management_dbContext context = getDatabaseContext();
             
                 int general_id = context.Components.Where(f => f.Name == "General").First().Id;
 
@@ -260,7 +268,7 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-                room_management_dbContext context = getContext();
+                room_management_dbContext context = getDatabaseContext();
 
                 
                 int general_id = context.ComponentTypes.Where(f => f.Name == "General").First().Id;
@@ -281,12 +289,12 @@ namespace WALL_R.Controllers
                 return Unauthorized();
             }
             try {
-                room_management_dbContext context = getContext();
+                room_management_dbContext context = getDatabaseContext();
                 
                 List<ComponentTypes> component_types = context.ComponentTypes.Where(f => f.Name != "General").ToList();
                 if (component_types.Count() == 0)
                 {
-                    NotFound();
+                    return NotFound();
                 }
                 return Ok(component_types);
             }
@@ -299,7 +307,7 @@ namespace WALL_R.Controllers
         [HttpGet("devicetypes")]
         public IActionResult GetDeviceTypes()
         {
-            room_management_dbContext context = getContext();
+            room_management_dbContext context = getDatabaseContext();
             if (!checkAuthentication())
             {
                 return Unauthorized();
