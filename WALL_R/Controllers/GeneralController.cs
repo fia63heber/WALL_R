@@ -39,6 +39,7 @@ namespace WALL_R.Controllers
                 {
                     return NotFound();
                 }
+
                 // Return a "200 - OK" success report including all rooms to the frontend:
                 return Ok(rooms);
             }
@@ -56,25 +57,34 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-
-            room_management_dbContext context = getDatabaseContext();
-            //check if room exists
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+            try
             {
-                return NotFound();
-            }
+                room_management_dbContext context = getDatabaseContext();
 
-            var defects = new List<Defects>();
-
-            foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
-            {
-                foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
+                // Check if room exists and if not send "404 - Not Found" to the frontend:
+                if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
                 {
-                    defects.AddRange(context.Defects.Where(f => f.ComponentId == component.Id).ToList());
+                    return NotFound();
                 }
-            }
 
-            return Ok(defects);
+                // Create empty 
+                List<Defects> defects = new List<Defects>();
+
+                foreach (Devices device in context.Devices.Where(f => f.RoomId == room_id))
+                {
+                    foreach (Components component in context.Components.Where(f => f.DeviceId == device.Id))
+                    {
+                        defects.AddRange(context.Defects.Where(f => f.ComponentId == component.Id).ToList());
+                    }
+                }
+
+                return Ok(defects);
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpGet("devices/{room_id}")]

@@ -212,13 +212,19 @@ namespace WALL_R.Controllers
             }
             try
             {
-                Defects defect = context.Defects.Where(f => f.StateId == state_id).First();
+                List<Defects> defects = context.Defects.Where(f => f.Id == defect_id).ToList();
 
-                if (context == null)
+                if (defects.Count == 0)
                 {
                     return NotFound();
                 }
-                defect.StateId = 2;
+                if (context.States.Where(f => f.Id == state_id).Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                Defects defect = defects.First();
+                defect.StateId = state_id;
                 context.Update(defect);
                 context.SaveChanges();
 
