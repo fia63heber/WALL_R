@@ -203,7 +203,7 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("defect/changeState")]
-        public IActionResult ChangeDefectState(int defect_id, int state_id)
+        public IActionResult ChangeDefectState(int defect_id, int state_id, string owner_comment)
         {
             room_management_dbContext context = getContext();
             if (!checkAuthentication())
@@ -225,6 +225,7 @@ namespace WALL_R.Controllers
 
                 Defects defect = defects.First();
                 defect.StateId = state_id;
+                defect.OwnerComment = owner_comment;
                 context.Update(defect);
                 context.SaveChanges();
 
