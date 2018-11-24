@@ -53,34 +53,7 @@ namespace WALL_R.Controllers
             }
         }
 
-        [HttpGet("account")]
-        public IActionResult GetAccounts()
-        {
-            if (!checkAuthentication())
-            {
-                return Unauthorized();
-            }
-            try
-            {
-                // Get database context
-                room_management_dbContext context = getContext();
-                if (!checkAuthentication())
-                {
-                    return Unauthorized();
-                }
-
-                // Get all existing accounts:
-                var accounts = context.Accounts;
-
-                // Return a "200 - OK" success report including all accounts to the frontend:
-                return Ok(accounts);
-            }
-            catch
-            {
-                // Return a "500 - Internal Server Error" error message to the frontend:
-                return StatusCode(500);
-            }
-        }
+       
 
         [HttpPost("room/newOwner")]
         public IActionResult SetOwnerForRoom(int room_id, int owner_id)
