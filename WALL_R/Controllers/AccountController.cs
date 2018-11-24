@@ -47,6 +47,7 @@ namespace WALL_R.Controllers
             Dictionary<String, String> result = new Dictionary<String, String>();
             result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account.Id));
             result.Add("name", account.Prename + " " + account.Surname);
+            result.Add("id",  account.Id.ToString());
 
             Json(result);
 
