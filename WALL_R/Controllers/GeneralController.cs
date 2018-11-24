@@ -201,12 +201,25 @@ namespace WALL_R.Controllers
             try
             {
                 room_management_dbContext context = getDatabaseContext();
+
+                // Get user who sent request
                 Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
 
-                return Ok(context.Defects);
+                // Get all defects written by the user
+                List<Defects> defects = context.Defects.Where(f => f.WriterId == user.Id).ToList();
+
+                // Check if defects is empty and if so send "404 - Not Found" to the frontend:
+                if (defects.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Return a success report including found defects to the frontend:
+                return Ok(defects);
             }
             catch
             {
+                // Return a success report including found devices to the frontend:
                 return StatusCode(500);
             }
         }
@@ -337,5 +350,7 @@ namespace WALL_R.Controllers
                 return StatusCode(500);
             }
         }
+
+
     }
 }
