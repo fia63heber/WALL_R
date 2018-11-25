@@ -20,14 +20,14 @@ namespace WALL_R.Libraries
         {
             try
             {
-                string path = "" + file_name;
+                string path = "Files/" + file_name;
 
                 // Delete possible file with similiar name:
-                DeleteFile(file_name);
+                DeleteFile(path);
 
                 // Create the file:
-                FileStream fs = CreateFileStream(file_name);
-                Byte[] info = new UTF8Encoding(true).GetBytes(file_content);
+                FileStream fs = CreateFileStream(path);
+                Byte[] info = Encoding.Unicode.GetBytes(file_content);
                 // Add some information to the file:
                 fs.Write(info, 0, info.Length);
                 fs.Close();

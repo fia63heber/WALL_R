@@ -165,17 +165,14 @@ namespace WALL_R.Controllers
                     var key_value_pair = header.Replace("{\"", "").Replace("\"}", "").Replace("\"","").Split(':');
                     if (key_value_pair[0] == "file_content")
                     {
+                        string test = "test";
                         file_content = key_value_pair[1];
                         break;
                     }
                 }
                 
-
-                byte[] data = Convert.FromBase64String(file_content);
-                file_content = Encoding.UTF8.GetString(data, 0, data.Length);
-
                 // Try to create physical file and return a "500 - Internal Server Error" error message to the frontend if it fails:
-                string file_name = "roomplan" + room_id + ".jpeg";
+                string file_name = "roomplan" + room_id;
 
 
                 if (!FileManager.CreateFile(file_name, file_content))
@@ -190,7 +187,7 @@ namespace WALL_R.Controllers
                     Files newFile = new Files();
 
                     // Set path for new file:
-                    newFile.FilePath = "roomplan" + room_id + ".jpeg";
+                    newFile.FilePath = "Files/roomplan" + room_id;
 
                     // Add new file to the database context:
                     context.Add(newFile);
@@ -200,7 +197,7 @@ namespace WALL_R.Controllers
                     Files file = files.First();
 
                     // Set new path for file:
-                    file.FilePath = "roomplan" + room_id + ".jpeg";
+                    file.FilePath = "Files/roomplan" + room_id;
 
                     // Change file in database context:
                     context.Update(file);
@@ -212,7 +209,7 @@ namespace WALL_R.Controllers
                 // Return a success report to the frontend:
                 return Ok();
             }
-            catch
+            catch(Exception ex)
             {
                 // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
@@ -255,11 +252,10 @@ namespace WALL_R.Controllers
                 string file_path = files.First().FilePath;
 
 
-                // Return file body in base 64 decoded string
-                var plainTextBytes = Encoding.UTF8.GetBytes(FileManager.GetFileBody(file_path));
-                return Ok(Convert.ToBase64String(plainTextBytes));
+                // Return file
+                return Ok(FileManager.GetFileBody(file_path));
             }
-            catch
+            catch(Exception ex)
             {
                 // Return a "500 - Internal Server Error" error message to the frontend:
                 return StatusCode(500);
