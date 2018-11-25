@@ -124,7 +124,7 @@ namespace WALL_R.Controllers
                 return StatusCode(500);
             }
         }
-        
+
         [HttpPost("defect")]
         public IActionResult CreateDefect(int component_id, int defect_type_id, int priority_id, string name, string entry_comment)
         {
@@ -132,60 +132,77 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-            room_management_dbContext context = getDatabaseContext();
-            Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
-            Defects newDefect = new Defects();
+            try {
+                room_management_dbContext context = getDatabaseContext();
+                Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+                if (user == null)
+                {
+                    return Unauthorized();
+                }
 
-            bool error = false;
-            string error_message = "Fehlerhafte Angaben:\n";
 
-            if (context.Components.Count(f => f.Id == component_id) == 0)
-            {
-                error = true;
-                error_message += "- Es wurde kein gültiger Geräte-Komponent angegeben\n";
-            }
-            else
-            {
-                newDefect.ComponentId = component_id;
-            }
+                // Create model for new defect :
+                Defects newDefect = new Defects();
+                
+                // Check sent parameters:
+                bool error = false;
+                string error_message = "Fehlerhafte Angaben:\n";
+                if (context.Components.Count(f => f.Id == component_id) == 0)
+                {
+                    error = true;
+                    error_message += "- Es wurde kein gültiger Geräte-Komponent angegeben\n";
+                }
+                else
+                {
+                    newDefect.ComponentId = component_id;
+                }
 
-            if (context.DefectTypes.Count(f => f.Id == defect_type_id) == 0)
-            {
-                error = true;
-                error_message += "- Es wurde kein gültiger Fehlertyp angegeben";
-            }
-            else
-            {
-                newDefect.DefectTypeId = defect_type_id;
-            }
+                if (context.DefectTypes.Count(f => f.Id == defect_type_id) == 0)
+                {
+                    error = true;
+                    error_message += "- Es wurde kein gültiger Fehlertyp angegeben";
+                }
+                else
+                {
+                    newDefect.DefectTypeId = defect_type_id;
+                }
 
-            if (context.Priorities.Count(f => f.Id == priority_id) == 0)
-            {
-                error = true;
-                error_message += "\n- Es wurde keine gültige Priorität angegeben";
-            }
-            else
-            {
-                newDefect.PriorityId = priority_id;
-            }
-            newDefect.WriterId = user.Id;
+                if (context.Priorities.Count(f => f.Id == priority_id) == 0)
+                {
+                    error = true;
+                    error_message += "\n- Es wurde keine gültige Priorität angegeben";
+                }
+                else
+                {
+                    newDefect.PriorityId = priority_id;
+                }
+                newDefect.WriterId = user.Id;
 
-            if (error)
-            {
-                return NotFound(error_message);
+                // Check if error occured and if so sent error message to the frontend:
+                if (error)
+                {
+                    return NotFound(error_message);
+                }
+
+                // Fill attributes of new defect:
+                newDefect.Name = name;
+                newDefect.EntryComment = entry_comment;
+                newDefect.StateId = 1;
+
+                // Add new defect to database context:
+                context.Add(newDefect);
+
+                // Save changes in context to the database:
+                context.SaveChanges();
+
+                // Return a success report including found defects to the frontend:
+                return Ok();
             }
-
-            newDefect.Name = name;
-            newDefect.EntryComment = entry_comment;
-            newDefect.StateId = 1;
-            context.Add(newDefect);
-            context.SaveChanges();
-
-            return Ok();
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpGet("writer/defects")]
@@ -199,10 +216,10 @@ namespace WALL_R.Controllers
             {
                 room_management_dbContext context = getDatabaseContext();
 
-                // Get user who sent request
+                // Get user who sent request:
                 Accounts user = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
 
-                // Get all defects written by the user
+                // Get all defects written by the user:
                 List<Defects> defects = context.Defects.Where(f => f.WriterId == user.Id).ToList();
 
                 // Check if defects is empty and if so send "404 - Not Found" to the frontend:

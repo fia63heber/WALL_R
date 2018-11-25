@@ -401,7 +401,6 @@ namespace WALL_R.Controllers
                 room_management_dbContext context = getContext();
 
                 // Get defect type that we want to delete
-
                 DefectTypes defectTypeToDelete = context.DefectTypes.Where(f => f.Id == defect_type_id).First();
                 context.DefectTypes.Remove(defectTypeToDelete);
 
@@ -421,19 +420,35 @@ namespace WALL_R.Controllers
         [HttpPost("defecttype")]
         public IActionResult UpdateDefectType(string defect_type_name)
         {
-            room_management_dbContext context = getContext();
             if (!checkAuthentication())
             {
                 return Unauthorized();
             }
+            try
+            {
+                room_management_dbContext context = getContext();
+                
+                // Create model for new defect type
+                DefectTypes defectType = new DefectTypes();
 
-            DefectTypes defectType = new DefectTypes();
-            defectType.Name = defect_type_name;
+                // Set name for new defect type
+                defectType.Name = defect_type_name;
 
-            context.DefectTypes.Add(defectType);
-            context.SaveChanges();
+                // Add new defect type to database context
+                context.DefectTypes.Add(defectType);
 
-            return Ok();
+                // Save changes in context to the database
+                context.SaveChanges();
+
+
+                // Return a success report to the frontend:
+                return Ok();
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpPost("defect/changeState")]
@@ -446,23 +461,63 @@ namespace WALL_R.Controllers
             }
             try
             {
+
+                // Get list of defects by defect id:
                 List<Defects> defects = context.Defects.Where(f => f.Id == defect_id).ToList();
 
-                if (defects.Count == 0)
-                {
-                    return NotFound();
-                }
-                if (context.States.Where(f => f.Id == state_id).Count() == 0)
+                // Check if list of defects is empty or state id is invalid. If one is true send error message to the frontend:
+                if (defects.Count == 0 || context.States.Where(f => f.Id == state_id).Count() == 0)
                 {
                     return NotFound();
                 }
 
+                // Get specific defect:
                 Defects defect = defects.First();
+
+                // Send mail to workshop if state has been changed to "waiting for workshop" DISABLED FOR DEVELOPEMENT
+                if (state_id == 2 && defect.Id != 2 && false)
+                {
+                    // Get additional information for defect and send error message to the frontend if data is missing:
+                    List<Components> components = context.Components.Where(f => f.Id == defect.ComponentId).ToList();
+                    if (components.Count() == 0)
+                    {
+                        return NotFound();
+                    }
+                    List<Devices> devices = context.Devices.Where(f => f.Id == components.First().DeviceId).ToList();
+                    if (devices.Count() == 0)
+                    {
+                        return NotFound();
+                    }
+                    Devices device = devices.First();
+                    List<Rooms> rooms = context.Rooms.Where(f => f.Id == device.RoomId).ToList();
+                    if (rooms.Count() == 0)
+                    {
+                        return NotFound();
+                    }
+                    Rooms room = rooms.First();
+                    List<Accounts> accounts = context.Accounts.Where(f => f.Id == room.OwnerId).ToList();
+                    if (accounts.Count() == 0)
+                    {
+                        return NotFound();
+                    }
+
+                    // Send mail with additional information 
+                    MailManager.SendRepairMail(room.RoomNumber, device.Name, accounts.First().Email);
+                }
+
+                // Set state of defect to given state
                 defect.StateId = state_id;
+
+                // Add comment by the room owner
                 defect.OwnerComment = owner_comment;
+
+                // Change defect in database context:
                 context.Update(defect);
+
+                // Save context to the database:
                 context.SaveChanges();
 
+                // Return a success report to the frontend:
                 return Ok();
             }
             catch

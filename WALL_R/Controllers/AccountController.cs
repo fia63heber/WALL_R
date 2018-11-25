@@ -18,56 +18,76 @@ namespace WALL_R.Controllers
         [HttpPost("login")]
         public IActionResult Login(string email, string password)
         {
-            room_management_dbContext context = getContext();
-            Accounts account = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
-            if (account == null)
+            try
             {
-                Logout();
+                room_management_dbContext context = getContext();
+                // Get user who sent request
+                Accounts account = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]);
+
+                // If user is logged in, log him out first:
+                if (account != null)
+                {
+                    Logout();
+                }
+
+                // Check sent data
+                if (context.Accounts.Where(f => f.Email == email).Count() == 0 || context.Accounts.Where(f => f.Email == email).First().Password != password)
+                {
+                    return NotFound("Falsche Accountdaten");
+                }
+
+                // Create session for accout and give the session cookie
+                account = context.Accounts.Where(f => f.Email == email).First();
+                string token = Guid.NewGuid().ToString();
+                Sessions session = new Sessions();
+                session.Token = token;
+                session.AccountId = account.Id;
+                session.ExpiringDate = DateTime.Now.AddMinutes(20);
+                context.Sessions.Add(session);
+                context.SaveChanges();
+                Response.Cookies.Append("session", token);
+
+                // Return success message including account data:
+                Dictionary<String, String> result = new Dictionary<String, String>();
+                result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account.Id));
+                result.Add("name", account.Prename + " " + account.Surname);
+                result.Add("id", account.Id.ToString());
+                Json(result);
+                return Ok(Json(result));
             }
-            if (context.Accounts.Where(f => f.Email == email).Count() == 0)
+            catch
             {
-                return NotFound("Falsche Accountdaten");
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
             }
-
-            if (context.Accounts.Where(f => f.Email == email).First().Password != password)
-            {
-                return NotFound("Falsche Accountdaten");
-            }
-            account = context.Accounts.Where(f => f.Email == email).First();
-            string token = Guid.NewGuid().ToString();
-            Sessions session = new Sessions();
-            session.Token = token;
-            session.AccountId = account.Id;
-            session.ExpiringDate = DateTime.Now.AddMinutes(20);
-            context.Sessions.Add(session);
-            context.SaveChanges();
-
-            Response.Cookies.Append("session", token);
-
-            Dictionary<String, String> result = new Dictionary<String, String>();
-            result.Add("rightgroup", Libraries.SessionManager.GetRightgroupForAccount(account.Id));
-            result.Add("name", account.Prename + " " + account.Surname);
-            result.Add("id",  account.Id.ToString());
-
-            Json(result);
-
-            return Ok(Json(result));
         }
 
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            room_management_dbContext context = getContext();
-            string token = HttpContext.Request.Cookies["session"];
-            Accounts account = Libraries.SessionManager.getAccountForSession(token);
-            if (account == null)
-            {
-                return NotFound();
-            }
+            try { 
+                room_management_dbContext context = getContext();
 
-            Libraries.SessionManager.clearSessionsByToken(token);
-            
-            return Ok();
+                // Get session token
+                string token = HttpContext.Request.Cookies["session"];
+
+                // Get Account and check if it is logged in
+                Accounts account = Libraries.SessionManager.getAccountForSession(token);
+                if (account == null)
+                {
+                    return NotFound();
+                }
+
+                // Clear all session we find for the account identified by its token
+                Libraries.SessionManager.clearSessionsByToken(token);
+
+                // Return a "200 - OK" success report 
+                return Ok();
+            }
+            catch {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
     }
 }
