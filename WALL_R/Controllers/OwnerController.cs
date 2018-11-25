@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using WALL_R.Models;
 using System.Web.Http.Cors;
 using WALL_R.Libraries;
+using System.Text.Encodings;
 
 namespace WALL_R.Controllers
 {
@@ -143,6 +144,10 @@ namespace WALL_R.Controllers
 
                 // Try to create physical file and return a "500 - Internal Server Error" error message to the frontend if it fails:
                 string file_name = "roomplan" + room_id + ".jpeg";
+
+                byte[] data = Convert.FromBase64String(file_content);
+                file_content = System.Text.Encoding.UTF8.GetString(data, 0, data.Length);
+
                 if (!FileManager.CreateFile(file_name, file_content))
                 {
                     return StatusCode(500);
@@ -235,42 +240,64 @@ namespace WALL_R.Controllers
             {
                 return Unauthorized();
             }
-            room_management_dbContext context = getContext();
-            bool error = false;
-            string error_message = "Fehlerhafte Angaben:\n";
-
-            if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+            try
             {
-                error = true;
-                error_message += "- Es wurde kein gültiger Raum angegeben\n";
+                room_management_dbContext context = getContext();
+
+                // Check sent parameters:
+                bool error = false;
+                string error_message = "Fehlerhafte Angaben:\n";
+
+                if (context.Rooms.Where(f => f.Id == room_id).Count() == 0)
+                {
+                    error = true;
+                    error_message += "- Es wurde kein gültiger Raum angegeben\n";
+                }
+                if (context.DeviceTypes.Where(f => f.Id == device_type_id).Count() == 0)
+                {
+                    error = true;
+                    error_message += "- Es wurde kein gültiger Geräte-Typ angegeben\n";
+                }
+
+                // Check if error occured and if so sent error message to the frontend:
+                if (error)
+                {
+                    return NotFound(error_message);
+                }
+                
+                // Create model for new device:
+                Devices device = new Devices();
+
+                // Set attributes for new device:
+                device.RoomId = room_id;
+                device.DeviceTypeId = device_type_id;
+                device.Name = name;
+                device.SerialNumber = serial_number;
+
+                // Add device to database context and save tracking data to get device id later:
+                var deviceTracking = context.Devices.Add(device);
+
+                // Save changes in context to the database:
+                context.SaveChanges();
+
+                // Create model for general component:
+                Components newComponent = new Components();
+
+
+                // Set attributes for new device:
+                newComponent.DeviceId = deviceTracking.Entity.Id;
+                newComponent.ComponentTypeId = 1;
+                newComponent.Name = "General Dummy";
+
+                context.Add(newComponent);
+                context.SaveChanges();
+                return Ok();
             }
-            if (context.DeviceTypes.Where(f => f.Id == device_type_id).Count() == 0)
+            catch
             {
-                error = true;
-                error_message += "- Es wurde kein gültiger Geräte-Typ angegeben\n";
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
             }
-
-            if (error)
-            {
-                return NotFound(error_message);
-            }
-            Devices device = new Devices();
-            device.RoomId = room_id;
-            device.DeviceTypeId = device_type_id;
-            device.Name = name;
-            device.SerialNumber = serial_number;
-
-            var deviceTracking = context.Devices.Add(device);
-            context.SaveChanges();
-            
-            Components newComponent = new Components();
-            newComponent.DeviceId = deviceTracking.Entity.Id;
-            newComponent.ComponentTypeId = 1;
-            newComponent.Name = "General Dummy";
-
-            context.Add(newComponent);
-            context.SaveChanges();
-            return Ok();
         }
 
         [HttpPost("device/addComponent")]
