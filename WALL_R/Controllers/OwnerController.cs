@@ -35,7 +35,7 @@ namespace WALL_R.Controllers
                 room_management_dbContext context = getContext();
 
                 // Get user who sent request
-                int owner_id = Libraries.SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]).Id;
+                int owner_id = SessionManager.getAccountForSession(HttpContext.Request.Cookies["session"]).Id;
 
                 // Create empty list of defects
                 var defects = new List<Defects>();
@@ -52,7 +52,7 @@ namespace WALL_R.Controllers
                     }
                 }
 
-                // Check if list of device types is empty and if so send "404 - Not Found" to the frontend:
+                // Check if list of defects is empty and if so send "404 - Not Found" to the frontend:
                 if (defects.Count() > 0)
                 {
                     NotFound();
@@ -136,16 +136,15 @@ namespace WALL_R.Controllers
                 }
 
                 // Get id of room plan files:
-                int file_id = rooms.First().PictureFileId;
+                int? file_id = rooms.First().PictureFileId;
 
                 // Get list of files:
                 List<Files> files = context.Files.Where(f => f.Id == file_id).ToList();
 
-                // Create physical file:
+                // Try to create physical file and return a "500 - Internal Server Error" error message to the frontend if it fails:
                 string file_name = "roomplan" + room_id + ".jpeg";
                 if (!FileManager.CreateFile(file_name, file_content))
                 {
-                    // Return a "500 - Internal Server Error" error message to the frontend:
                     return StatusCode(500);
                 }
                 
@@ -155,19 +154,27 @@ namespace WALL_R.Controllers
                     // Create model for new file:
                     Files newFile = new Files();
 
-
+                    // Set path for new file:
                     newFile.FilePath = "";
+
+                    // Add new file to the database context:
                     context.Add(newFile);
                 }
                 else {
+                    // Get file that has to be changed:
                     Files file = files.First();
 
+                    // Set new path for file:
                     file.FilePath = "";
 
+                    // Change file in database context:
                     context.Update(file);
                 }
 
+                // Save changes in context to the database:
                 context.SaveChanges();
+
+                // Return a success report to the frontend:
                 return Ok();
             }
             catch
@@ -180,9 +187,45 @@ namespace WALL_R.Controllers
         [HttpGet("room/{room_id}/planFile")]
         public IActionResult getPlanfileForRoom(int room_id)
         {
-            string file_name = "roomplan" + room_id + ".jpeg";
-            var image = System.IO.File.OpenRead(FileManager.GetFilePath(file_name));
-            return File(image, "image/jpeg");
+            if (!checkAuthentication())
+            {
+                return Unauthorized();
+            }
+            try
+            {
+                room_management_dbContext context = getContext();
+
+                // Get list of rooms by given room id
+                List<Rooms> rooms = context.Rooms.Where(f => f.Id == room_id).ToList();
+
+                // Check if list of rooms is empty and if so send "404 - Not Found" to the frontend:
+                if (rooms.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                // Get file id
+                int? file_id = rooms.First().PictureFileId;
+
+                // Get list of rooms by file id
+                List<Files> files = context.Files.Where(f => f.Id == file_id).ToList();
+
+                // Check if list of files is empty and if so send "404 - Not Found" to the frontend:
+                if (files.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                string filepath = files.First().FilePath;
+                var image = System.IO.File.OpenRead(filepath);
+
+                return File(image, "image/jpeg");
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpPost("room/addDevice")]

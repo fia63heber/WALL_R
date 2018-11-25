@@ -34,7 +34,7 @@ namespace WALL_R.Libraries
                 
                 return true;
             }
-            catch(Exception ex)
+            catch
             {
                 return false;
             }

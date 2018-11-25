@@ -37,6 +37,18 @@ namespace WALL_R.Controllers
                 // Set roomnumber for the new room:
                 room.RoomNumber = room_number;
 
+                // Create model for new file:
+                Files file = new Files();
+
+                // Add new file to database context and track it to get ID later
+                var fileTracking = context.Add(file);
+
+                // Save changes in context permanently to the database
+                context.SaveChanges();
+
+                // Set picture file id for the new room which we tracked earlier:
+                room.PictureFileId = fileTracking.Entity.Id;
+
                 // Add new room to database context
                 context.Add(room);
 
