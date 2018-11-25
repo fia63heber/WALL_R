@@ -25,16 +25,20 @@ namespace WALL_R.Libraries
                 // Delete possible file with similiar name:
                 DeleteFile(path);
 
+                var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(file_content);
+                string[] text = { System.Convert.ToBase64String(plainTextBytes) };
+                File.WriteAllLines(path, text);
+                /*
                 // Create the file:
                 FileStream fs = CreateFileStream(path);
                 Byte[] info = Encoding.Unicode.GetBytes(file_content);
                 // Add some information to the file:
                 fs.Write(info, 0, info.Length);
                 fs.Close();
-                
+                */
                 return true;
             }
-            catch
+            catch(Exception ex)
             {
                 return false;
             }
@@ -44,8 +48,19 @@ namespace WALL_R.Libraries
         {
             try
             {
+                string[] text = File.ReadAllLines(file_path);
+
+
+                string test = "";
+                foreach (string line in text)
+                {
+                    test += line;
+                }
+                var base64EncodedBytes = System.Convert.FromBase64String(test);
+                /*
                 string text = "";
                 using (StreamReader sr = new StreamReader(file_path))
+           
                 {
                     string line;
                     // Read and display lines from the file until the end of 
@@ -55,8 +70,8 @@ namespace WALL_R.Libraries
                         text += line;
                     }
                 }
-
-                return text;
+                */
+                return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
             }
             catch(Exception ex)
             {
