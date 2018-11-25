@@ -40,14 +40,25 @@ namespace WALL_R.Libraries
             }
         }
 
-        public static string GetFilePath(string file_name)
+        public static string GetFileBody(string file_path)
         {
             try
             {
-                string path = "" + file_name;
-                return path;
+                string text = "";
+                using (StreamReader sr = new StreamReader(file_path))
+                {
+                    string line;
+                    // Read and display lines from the file until the end of 
+                    // the file is reached.
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        text += line;
+                    }
+                }
+
+                return text;
             }
-            catch
+            catch(Exception ex)
             {
                 return "";
             }

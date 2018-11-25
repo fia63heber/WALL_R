@@ -190,7 +190,7 @@ namespace WALL_R.Controllers
                     Files newFile = new Files();
 
                     // Set path for new file:
-                    newFile.FilePath = "";
+                    newFile.FilePath = "roomplan" + room_id + ".jpeg";
 
                     // Add new file to the database context:
                     context.Add(newFile);
@@ -252,13 +252,12 @@ namespace WALL_R.Controllers
                 }
 
                 // Get file path from database:
-                string filepath = files.First().FilePath;
+                string file_path = files.First().FilePath;
 
-                // Get image to return
-                var image = System.IO.File.OpenRead(filepath);
-                
-                // Return file to the frontend:
-                return File(image, "image/jpeg");
+
+                // Return file body in base 64 decoded string
+                var plainTextBytes = Encoding.UTF8.GetBytes(FileManager.GetFileBody(file_path));
+                return Ok(Convert.ToBase64String(plainTextBytes));
             }
             catch
             {
