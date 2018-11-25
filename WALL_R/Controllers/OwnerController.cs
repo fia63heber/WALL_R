@@ -121,7 +121,7 @@ namespace WALL_R.Controllers
         }
 
         [HttpPost("room/planFile")]
-        public IActionResult addPlanfileForRoom(int room_id, string file_content)
+        public IActionResult addPlanfileForRoom(int room_id)
         {
             if (!checkAuthentication())
             {
@@ -156,7 +156,19 @@ namespace WALL_R.Controllers
                     bodyStr = reader.ReadToEnd();
                 }
                 req.Body.Position = 0;
-                return Ok(bodyStr);
+
+                var headers = bodyStr.Split(',');
+                string file_content = "";
+
+                foreach (string header in headers)
+                {
+                    var key_value_pair = header.Replace("{\"", "").Replace("\"}", "").Replace("\"","").Split(':');
+                    if (key_value_pair[0] == "file_content")
+                    {
+                        file_content = key_value_pair[1];
+                        break;
+                    }
+                }
                 
 
                 byte[] data = Convert.FromBase64String(file_content);
