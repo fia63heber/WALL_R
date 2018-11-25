@@ -200,7 +200,7 @@ namespace WALL_R.Controllers
                     Files file = files.First();
 
                     // Set new path for file:
-                    file.FilePath = "";
+                    file.FilePath = "roomplan" + room_id + ".jpeg";
 
                     // Change file in database context:
                     context.Update(file);
