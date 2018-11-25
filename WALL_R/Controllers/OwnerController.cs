@@ -7,6 +7,9 @@ using WALL_R.Models;
 using System.Web.Http.Cors;
 using WALL_R.Libraries;
 using System.Text.Encodings;
+using Microsoft.AspNetCore.Http.Internal;
+using System.IO;
+using System.Text;
 
 namespace WALL_R.Controllers
 {
@@ -142,11 +145,26 @@ namespace WALL_R.Controllers
                 // Get list of files:
                 List<Files> files = context.Files.Where(f => f.Id == file_id).ToList();
 
+                // Get file_content from request body:
+                string bodyStr = "";
+                var req = HttpContext.Request;
+                
+                req.EnableRewind();
+
+                using (StreamReader reader = new StreamReader(req.Body, Encoding.UTF8, true, 1024, true))
+                {
+                    bodyStr = reader.ReadToEnd();
+                }
+                req.Body.Position = 0;
+                return Ok(bodyStr);
+                
+
+                byte[] data = Convert.FromBase64String(file_content);
+                file_content = Encoding.UTF8.GetString(data, 0, data.Length);
+
                 // Try to create physical file and return a "500 - Internal Server Error" error message to the frontend if it fails:
                 string file_name = "roomplan" + room_id + ".jpeg";
 
-                byte[] data = Convert.FromBase64String(file_content);
-                file_content = System.Text.Encoding.UTF8.GetString(data, 0, data.Length);
 
                 if (!FileManager.CreateFile(file_name, file_content))
                 {
@@ -221,9 +239,13 @@ namespace WALL_R.Controllers
                     return NotFound();
                 }
 
+                // Get file path from database:
                 string filepath = files.First().FilePath;
-                var image = System.IO.File.OpenRead(filepath);
 
+                // Get image to return
+                var image = System.IO.File.OpenRead(filepath);
+                
+                // Return file to the frontend:
                 return File(image, "image/jpeg");
             }
             catch
@@ -282,15 +304,19 @@ namespace WALL_R.Controllers
 
                 // Create model for general component:
                 Components newComponent = new Components();
-
-
+                
                 // Set attributes for new device:
                 newComponent.DeviceId = deviceTracking.Entity.Id;
                 newComponent.ComponentTypeId = 1;
                 newComponent.Name = "General Dummy";
 
+                // Add device to new component to database context:
                 context.Add(newComponent);
+                
+                // Save changes in context to the database:
                 context.SaveChanges();
+                
+                // Return a success report to the frontend:
                 return Ok();
             }
             catch
@@ -303,53 +329,86 @@ namespace WALL_R.Controllers
         [HttpPost("device/addComponent")]
         public IActionResult addComponentForDevice(int device_id, int component_type_id, string name)
         {
-            room_management_dbContext context = getContext();
             if (!checkAuthentication())
             {
                 return Unauthorized();
             }
-            bool error = false;
-            string error_message = "Fehlerhafte Angaben:\n";
-
-            if (context.Devices.Where(f => f.Id == device_id).Count() == 0)
+            try
             {
-                error = true;
-                error_message += "- Es wurde kein gültiges Gerät angegeben\n";
-            }
-            if (context.ComponentTypes.Where(f => f.Id == component_type_id).Count() == 0)
-            {
-                error = true;
-                error_message += "- Es wurde kein gültiger Komponent-Typ angegeben\n";
-            }
+                room_management_dbContext context = getContext();
 
-            if (error)
-            {
-                return NotFound(error_message);
-            }
-            Components component = new Components();
-            component.DeviceId = device_id;
-            component.ComponentTypeId = component_type_id;
-            component.Name = name;
+                // Check sent parameters:
+                bool error = false;
+                string error_message = "Fehlerhafte Angaben:\n";
 
-            context.Components.Add(component);
-            context.SaveChanges();
-            return Ok();
+                if (context.Devices.Where(f => f.Id == device_id).Count() == 0)
+                {
+                    error = true;
+                    error_message += "- Es wurde kein gültiges Gerät angegeben\n";
+                }
+                if (context.ComponentTypes.Where(f => f.Id == component_type_id).Count() == 0)
+                {
+                    error = true;
+                    error_message += "- Es wurde kein gültiger Komponent-Typ angegeben\n";
+                }
+
+                // Check if error occured and if so sent error message to the frontend:
+                if (error)
+                {
+                    return NotFound(error_message);
+                }
+
+                // Create model for new component:
+                Components component = new Components();
+                
+                // Set attributes for new component:
+                component.DeviceId = device_id;
+                component.ComponentTypeId = component_type_id;
+                component.Name = name;
+
+                // Add device to new component to database context:
+                context.Components.Add(component);
+
+                // Save changes in context to the database:
+                context.SaveChanges();
+
+                // Return a success report to the frontend:
+                return Ok();
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
 
         [HttpDelete("defecttype")]
         public IActionResult DeleteDefectType(int defect_type_id)
         {
-            room_management_dbContext context = getContext();
             if (!checkAuthentication())
             {
                 return Unauthorized();
             }
+            try
+            {
+                room_management_dbContext context = getContext();
 
-            DefectTypes defectTypeToDelete = context.DefectTypes.Where(f => f.Id == defect_type_id).First();
-            context.DefectTypes.Remove(defectTypeToDelete);
-            context.SaveChanges();
+                // Get defect type that we want to delete
 
-            return Ok();
+                DefectTypes defectTypeToDelete = context.DefectTypes.Where(f => f.Id == defect_type_id).First();
+                context.DefectTypes.Remove(defectTypeToDelete);
+
+                // Save changes in context to the database:
+                context.SaveChanges();
+                
+                // Return a success report to the frontend:
+                return Ok();
+            }
+            catch
+            {
+                // Return a "500 - Internal Server Error" error message to the frontend:
+                return StatusCode(500);
+            }
         }
         
         [HttpPost("defecttype")]
