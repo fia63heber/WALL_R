@@ -31,7 +31,7 @@ namespace WALL_R.Libraries
                 // Add some information to the file:
                 fs.Write(info, 0, info.Length);
                 fs.Close();
-                
+
                 return true;
             }
             catch
