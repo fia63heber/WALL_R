@@ -91,7 +91,7 @@ namespace WALL_R.Controllers
 
         [HttpGet("devices/{room_id}")]
         public IActionResult GetDevicesForRoom(int room_id)
-        {
+        { 
             if (!checkAuthentication())
             {
                 return Unauthorized();
@@ -117,6 +117,7 @@ namespace WALL_R.Controllers
 
                 // Return a success report including found devices to the frontend:
                 return Ok(devices);
+
             }
             catch
             {

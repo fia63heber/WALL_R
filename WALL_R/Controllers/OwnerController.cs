@@ -189,8 +189,12 @@ namespace WALL_R.Controllers
                     // Set path for new file:
                     newFile.FilePath = "Files/roomplan" + room_id;
 
-                    // Add new file to the database context:
-                    context.Add(newFile);
+                    // Add new file to the database context, track it and save:
+                    var fileTracking = context.Add(newFile);
+                    context.SaveChanges();
+
+                    // Change file id for room to new file
+                    context.Rooms.Where(f => f.Id == room_id).First().PictureFileId = fileTracking.Entity.Id;
                 }
                 else {
                     // Get file that has to be changed:
